@@ -1,0 +1,54 @@
+<!-- save as public/icon.svg or similar -->
+<svg
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Background circle (dark, like Spotify app background) -->
+  <circle cx="256" cy="256" r="256" fill="#121212" />
+
+  <!-- Inner circle (slightly lighter) -->
+  <circle cx="256" cy="256" r="210" fill="#191414" />
+
+  <!-- “Wrapped stats” motif: three curved lines suggesting tracks/streams -->
+  <path
+    d="M140 295
+       C 200 260, 310 260, 372 295
+       C 382 301, 395 298, 401 288
+       C 407 278, 404 265, 394 259
+       C 320 215, 190 215, 118 259
+       C 108 265, 105 278, 111 288
+       C 117 298, 130 301, 140 295Z"
+    fill="#1DB954"
+  />
+  <path
+    d="M150 245
+       C 210 215, 300 215, 362 245
+       C 372 250, 384 247, 389 238
+       C 395 228, 392 216, 382 210
+       C 310 175, 200 175, 130 210
+       C 120 216, 117 228, 123 238
+       C 128 247, 140 250, 150 245Z"
+    fill="#1ED760"
+    opacity="0.95"
+  />
+  <path
+    d="M160 200
+       C 215 175, 295 175, 352 200
+       C 362 205, 373 202, 378 193
+       C 383 184, 380 173, 371 168
+       C 308 139, 202 139, 140 168
+       C 131 173, 128 184, 133 193
+       C 138 202, 149 205, 160 200Z"
+    fill="#1DB954"
+    opacity="0.9"
+  />
+
+  <!-- Small “play/pulse” mark in the center to hint at audio -->
+  <circle cx="256" cy="256" r="42" fill="#121212" />
+  <path
+    d="M242 236 L282 256 L242 276 Z"
+    fill="#1DB954"
+  />
+</svg>
