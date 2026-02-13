@@ -171,6 +171,18 @@ body {
   transform: translateY(-1px);
 }
 
+/* Player Error */
+.player-error {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1rem;
+  color: var(--accent);
+  font-size: 0.875rem;
+  margin-right: 1rem;
+  max-width: 300px;
+}
+
 /* Dashboard */
 .dashboard {
   padding: 2rem;
@@ -291,6 +303,11 @@ body {
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.25rem;
+}
+
+.player-error-message {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: var(--accent);
 }
 
 /* View Selector */
@@ -647,18 +664,18 @@ body {
 
 .tracks-table.compact .table-row {
   padding: 0.75rem;
-  grid-template-columns: 50px 2fr 100px 80px;
+  grid-template-columns: 50px 2fr 100px 80px 90px !important;
 }
 
 .tracks-table.full .table-header,
 .tracks-table.full .table-row {
-  grid-template-columns: 60px 2fr 1.5fr 200px 100px 120px;
+  grid-template-columns: 60px 2fr 1.5fr 200px 100px 120px 90px !important;
   padding: 1rem 1.5rem;
 }
 
 .table-header {
   display: grid;
-  grid-template-columns: 60px 3fr 2fr 120px 100px 120px;
+  grid-template-columns: 60px 2fr 1.5fr 200px 100px 120px 90px !important;
   gap: 1rem;
   padding: 1rem 1.5rem;
   background: var(--surface-light);
@@ -671,7 +688,7 @@ body {
 
 .table-row {
   display: grid;
-  grid-template-columns: 60px 3fr 2fr 100px 120px;
+  grid-template-columns: 60px 2fr 1.5fr 200px 100px 120px 90px !important;
   gap: 1rem;
   padding: 1rem 1.5rem;
   border-bottom: var(--border);
@@ -754,6 +771,11 @@ body {
   font-size: 0.875rem;
 }
 
+.play-btn {
+  justify-content: center;
+  min-width: 90px;
+}
+
 /* Audio Features */
 .features {
   min-width: 120px;
@@ -793,6 +815,134 @@ body {
   background: linear-gradient(90deg, var(--secondary), var(--accent));
   border-radius: 2px;
   transition: width 0.3s ease;
+}
+
+/* Highlight Play Button Styles */
+.highlight-play-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #000;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 70px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.highlight-play-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+}
+
+.highlight-play-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--surface-light);
+  color: var(--text-secondary);
+}
+
+.playing-indicator {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.play-icon {
+  font-size: 0.875rem;
+}
+
+.play-text {
+  font-size: 0.6875rem;
+  letter-spacing: 0.5px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Player Status Indicator */
+.player-status {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface);
+  border: var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 1000;
+  box-shadow: var(--shadow);
+  max-width: 300px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.player-status-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-status-track {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-status-detail {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.player-status-stop {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.player-status-stop:hover {
+  background: #ff5252;
+  transform: translateY(-1px);
+}
+
+/* Demo mode specific styles */
+.demo-track .highlight-play-btn {
+  background: linear-gradient(135deg, var(--secondary), #b066ff);
+}
+
+.demo-track .highlight-play-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(145, 70, 255, 0.3);
 }
 
 /* Insights Grid */
@@ -1015,6 +1165,44 @@ body {
 .button:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(29, 185, 84, 0.3);
+}
+
+.demo-button {
+  background: linear-gradient(135deg, var(--secondary), #b066ff);
+  color: var(--text);
+  margin-top: 1rem;
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.demo-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(145, 70, 255, 0.3);
+}
+
+.demo-cta {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0 2rem;
+}
+
+.demo-badge {
+  display: inline-block;
+  margin-left: 1rem;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, var(--secondary), #b066ff);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 /* Modal Styles */
@@ -1473,7 +1661,7 @@ body {
 
   .tracks-table.full .table-header,
   .tracks-table.full .table-row {
-    grid-template-columns: 50px 2fr 1.5fr 150px 80px 100px;
+    grid-template-columns: 50px 2fr 1.5fr 150px 80px 100px 90px;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
   }
@@ -1525,6 +1713,12 @@ body {
     padding: 1rem;
   }
 
+  .player-error {
+    margin-right: 0;
+    margin-bottom: 1rem;
+    max-width: 100%;
+  }
+
   .dashboard {
     padding: 1rem;
   }
@@ -1535,7 +1729,7 @@ body {
 
   .table-header,
   .table-row {
-    grid-template-columns: 40px 1fr 80px;
+    grid-template-columns: 40px 1fr 80px 90px !important;
     gap: 0.5rem;
     padding: 0.75rem;
   }
@@ -1548,12 +1742,12 @@ body {
   }
 
   .tracks-table.compact .table-row {
-    grid-template-columns: 40px 1fr 60px;
+    grid-template-columns: 40px 1fr 60px 90px !important;
   }
 
   .tracks-table.full .table-header,
   .tracks-table.full .table-row {
-    grid-template-columns: 40px 1fr;
+    grid-template-columns: 40px 1fr 90px !important;
   }
 
   .stats-overview {
@@ -1602,6 +1796,12 @@ body {
     width: 100%;
     justify-content: space-between;
     margin-left: 0;
+  }
+
+  .player-status {
+    left: 20px;
+    right: 20px;
+    max-width: none;
   }
 }
 
