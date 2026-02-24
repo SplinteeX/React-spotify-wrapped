@@ -1,4 +1,6 @@
+// controllers/authController.js
 import axios from "axios";
+import { getUsersCollection } from "../config/database.js";
 import {
   CLIENT_ID,
   CLIENT_SECRET,
@@ -14,6 +16,7 @@ import {
   refreshAccessToken,
 } from "../config/spotify.js";
 
+// ------------------- Login -------------------
 export function login(req, res) {
   const state = generateRandomString(16);
   const codeVerifier = generateRandomString(64);
@@ -45,9 +48,10 @@ export function login(req, res) {
   });
 
   console.log(`🔑 /auth/login: Redirecting to Spotify with state ${state}`);
-  res.redirect(`${SPOTIFY_AUTH_URL}?${params.toString()}`);
+  return res.redirect(`${SPOTIFY_AUTH_URL}?${params.toString()}`);
 }
 
+// ------------------- Callback -------------------
 export async function callback(req, res) {
   const { code, state, error } = req.query;
 
@@ -66,13 +70,13 @@ export async function callback(req, res) {
 
   try {
     console.log(
-      `🔄 /auth/callback: Exchanging code for tokens (state: ${state})`
+      `🔄 /auth/callback: Exchanging code for tokens (state: ${state})`,
     );
 
     const body = new URLSearchParams({
       client_id: CLIENT_ID,
       grant_type: "authorization_code",
-      code: code,
+      code,
       redirect_uri: REDIRECT_URI,
       code_verifier: codeVerifier,
     });
@@ -80,31 +84,64 @@ export async function callback(req, res) {
     const tokenRes = await axios.post(SPOTIFY_TOKEN_URL, body.toString(), {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${Buffer.from(
-          `${CLIENT_ID}:${CLIENT_SECRET}`
-        ).toString("base64")}`,
+        Authorization: `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")}`,
       },
     });
 
     const { access_token, refresh_token, expires_in } = tokenRes.data;
     console.log("✅ /auth/callback: Token exchange successful");
 
+    // ------------------- Fetch Spotify User -------------------
     try {
       const userRes = await axios.get(`${SPOTIFY_API_URL}/me`, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
 
-      if (userRes.data?.id && refresh_token) {
-        refreshTokens.set(userRes.data.id, refresh_token);
-        console.log(`💾 Stored refresh token for user: ${userRes.data.id}`);
+      const spotifyUser = userRes.data;
+
+      if (spotifyUser?.id) {
+        console.log(
+          `🔍 /auth/callback: Fetched Spotify user: ${spotifyUser.id}`,
+        );
+
+        const usersCollection = getUsersCollection();
+
+        // Store refresh token in memory (optional)
+        if (refresh_token) {
+          refreshTokens.set(spotifyUser.id, refresh_token);
+          console.log(`💾 Stored refresh token for user: ${spotifyUser.id}`);
+        }
+
+        // Upsert user (single reliable write)
+        await usersCollection.updateOne(
+          { spotify_id: spotifyUser.id },
+          {
+            $set: {
+              spotify_id: spotifyUser.id,
+              display_name: spotifyUser.display_name || null,
+              email: spotifyUser.email || null,
+              updated_at: new Date(),
+            },
+            $setOnInsert: {
+              points: 0,
+              created_at: new Date(),
+            },
+          },
+          { upsert: true },
+        );
+
+        console.log(`✅ Upserted user in Atlas: ${spotifyUser.id}`);
+      } else {
+        console.warn("⚠️ Spotify user id missing from /me response");
       }
     } catch (userError) {
       console.warn(
-        "Could not fetch user profile for token storage:",
-        userError.message
+        "⚠️ Could not fetch Spotify user profile:",
+        userError.message,
       );
     }
 
+    // ------------------- Redirect to Frontend -------------------
     const redirectParams = new URLSearchParams({
       access_token,
       refresh_token: refresh_token || "",
@@ -112,16 +149,20 @@ export async function callback(req, res) {
     });
 
     console.log("↪️ /auth/callback: Redirecting back to frontend");
-    res.redirect(`${FRONTEND_URL}/callback#${redirectParams.toString()}`);
+    return res.redirect(
+      `${FRONTEND_URL}/callback#${redirectParams.toString()}`,
+    );
   } catch (e) {
     console.error("❌ /auth/callback: Token exchange failed", {
       status: e.response?.status,
       data: e.response?.data,
+      message: e.message,
     });
-    res.redirect(`${FRONTEND_URL}/?error=token_exchange_failed`);
+    return res.redirect(`${FRONTEND_URL}/?error=token_exchange_failed`);
   }
 }
 
+// ------------------- Refresh Token -------------------
 export async function refresh(req, res) {
   const { refresh_token, user_id } = req.body;
 
@@ -142,13 +183,17 @@ export async function refresh(req, res) {
       return res.status(401).json({ error: "Failed to refresh token" });
     }
 
-    res.json({
+    console.log(
+      `🔄 /auth/refresh: Tokens refreshed for user ${user_id || "unknown"}`,
+    );
+
+    return res.json({
       access_token: newTokens.access_token,
       expires_in: newTokens.expires_in,
       refresh_token: newTokens.refresh_token || tokenToRefresh,
     });
   } catch (error) {
     console.error("❌ /auth/refresh:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

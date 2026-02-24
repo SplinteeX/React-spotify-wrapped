@@ -9,6 +9,7 @@ import statsRoutes from "./routes/statsRoutes.js";
 import spotifyDataRoutes from "./routes/spotifyDataRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import { FRONTEND_URL, REDIRECT_URI } from "./config/spotify.js";
+import { connectDB } from "./config/database.js";
 
 const app = express();
 
@@ -16,7 +17,7 @@ app.use(
   cors({
     origin: "http://127.0.0.1:5173",
     credentials: true,
-  })
+  }),
 );
 
 app.use(requestLogger);
@@ -48,25 +49,33 @@ app.use((req, res) => {
   });
 });
 
-export function initApp() {
-  console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
-  console.log(`🔐 Redirect URI: ${REDIRECT_URI}`);
-  console.log(`📊 Health check: /health`);
-  console.log(`🎵 Web Playback SDK endpoints ready:`);
-  console.log(`   - PUT /api/transfer-playback`);
-  console.log(`   - PUT /api/play (with position_ms)`);
-  console.log(
-    `⚠️  IMPORTANT: Make sure these scopes are enabled in your Spotify Developer Dashboard:`
-  );
-  console.log(`   - user-read-email`);
-  console.log(`   - user-read-private`);
-  console.log(`   - user-top-read`);
-  console.log(`   - user-follow-read`);
-  console.log(`   - user-read-playback-state`);
-  console.log(`   - user-read-recently-played`);
-  console.log(`   - playlist-modify-public`);
-  console.log(`   - playlist-modify-private`);
-  console.log(`   - streaming`);
-  console.log(`   - user-modify-playback-state`);
-  return app;
+export async function initApp() {
+  try {
+    await connectDB();
+
+    console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
+    console.log(`🔐 Redirect URI: ${REDIRECT_URI}`);
+    console.log(`📊 Health check: /health`);
+
+    console.log(`🎵 Web Playback SDK endpoints ready:`);
+    console.log(`   - PUT /api/transfer-playback`);
+    console.log(`   - PUT /api/play (with position_ms)`);
+
+    console.log(`⚠️  Required Spotify scopes:`);
+    console.log(`   - user-read-email`);
+    console.log(`   - user-read-private`);
+    console.log(`   - user-top-read`);
+    console.log(`   - user-follow-read`);
+    console.log(`   - user-read-playback-state`);
+    console.log(`   - user-read-recently-played`);
+    console.log(`   - playlist-modify-public`);
+    console.log(`   - playlist-modify-private`);
+    console.log(`   - streaming`);
+    console.log(`   - user-modify-playback-state`);
+
+    return app;
+  } catch (error) {
+    console.error("❌ Failed to initialize application:", error);
+    process.exit(1);
+  }
 }

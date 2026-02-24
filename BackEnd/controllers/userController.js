@@ -1,8 +1,15 @@
+// controllers/userController.js
 import axios from "axios";
+import { getUsersCollection } from "../config/database.js";
 import { SPOTIFY_API_URL } from "../config/spotify.js";
 
+// ------------------- Get Me -------------------
 export async function getMe(req, res) {
   const accessToken = req.headers.authorization?.replace("Bearer ", "");
+
+  if (!accessToken) {
+    return res.status(401).json({ error: "Missing access token" });
+  }
 
   try {
     console.log("👤 /api/me: Fetching user profile");
@@ -24,14 +31,15 @@ export async function getMe(req, res) {
     };
 
     console.log("✅ /api/me: Success");
-    res.json(userData);
+    return res.json(userData);
   } catch (e) {
     console.error("❌ /api/me: Failed", {
       status: e.response?.status,
       message: e.response?.data?.error?.message || e.message,
+      data: e.response?.data,
     });
 
-    res.status(e.response?.status || 500).json({
+    return res.status(e.response?.status || 500).json({
       error: e.response?.data?.error?.message || "Failed to fetch profile",
       details: e.response?.data || {},
     });

@@ -1,5 +1,4 @@
-// src/hooks/useSpotifyPlayer.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function useSpotifyPlayer({
   accessToken,
@@ -15,22 +14,23 @@ export default function useSpotifyPlayer({
   const [isHighlightPlaying, setIsHighlightPlaying] = useState(false);
   const [playerError, setPlayerError] = useState(null);
 
-  // Initialize Web Playback SDK
+  const playerRef = useRef(null);
+
+  // Initialize Web Playback SDK (runs only when token changes)
   useEffect(() => {
     if (!accessToken || isDemoMode) return;
 
+    let mounted = true;
+
     const initializePlayer = () => {
       if (!window.Spotify) {
-        console.warn("Spotify Web Playback SDK not loaded yet");
         setTimeout(initializePlayer, 100);
         return;
       }
 
       const newPlayer = new window.Spotify.Player({
         name: "Spotify Wrapped Player",
-        getOAuthToken: (cb) => {
-          cb(accessToken);
-        },
+        getOAuthToken: (cb) => cb(accessToken),
         volume: 0.5,
       });
 
@@ -44,8 +44,7 @@ export default function useSpotifyPlayer({
         setPlayerError(message);
       });
 
-      newPlayer.addListener("account_error", ({ message }) => {
-        console.error("Account Error:", message);
+      newPlayer.addListener("account_error", () => {
         setPlayerError(
           "Premium account required for playback. Please upgrade to Spotify Premium."
         );
@@ -58,14 +57,17 @@ export default function useSpotifyPlayer({
 
       newPlayer.addListener("player_state_changed", async (state) => {
         if (!state) return;
-        const { position, track_window } = state;
+
+        const { position, track_window, paused } = state;
+
         setPlaybackPosition(position);
 
-        if (track_window.current_track) {
+        if (track_window?.current_track) {
           setCurrentTrack(track_window.current_track);
-          setIsPlaying(!state.paused);
+          setIsPlaying(!paused);
         }
 
+        // Stop highlight after 30 seconds
         if (
           highlightStartTime !== null &&
           position >= highlightStartTime + 30000
@@ -77,17 +79,22 @@ export default function useSpotifyPlayer({
       });
 
       newPlayer.addListener("ready", ({ device_id }) => {
+        console.log("Spotify Player Ready:", device_id);
         setDeviceId(device_id);
         setPlayerError(null);
       });
 
       newPlayer.addListener("not_ready", ({ device_id }) => {
-        console.log("Device offline:", device_id);
+        console.log("Device went offline:", device_id);
         setDeviceId(null);
       });
 
       newPlayer.connect();
-      setPlayer(newPlayer);
+
+      if (mounted) {
+        playerRef.current = newPlayer;
+        setPlayer(newPlayer);
+      }
     };
 
     window.onSpotifyWebPlaybackSDKReady = initializePlayer;
@@ -97,29 +104,30 @@ export default function useSpotifyPlayer({
     }
 
     return () => {
-      if (player) {
-        player.disconnect();
+      mounted = false;
+      if (playerRef.current) {
+        playerRef.current.disconnect();
+        playerRef.current = null;
       }
     };
-  }, [accessToken, isDemoMode, highlightStartTime, player]);
+  }, [accessToken, isDemoMode]);
 
+  // Play 30s highlight
   const playHighlight = async (trackUri, trackDuration) => {
     if (isDemoMode) {
       alert(
-        "🎵 Demo Mode: In a real session, this would play a 30-second highlight of the track."
+        "🎵 Demo Mode: In a real session, this would play a 30-second highlight."
       );
       return;
     }
 
     if (!accessToken) {
-      alert("Please log in with Spotify to play highlights");
+      alert("Please log in with Spotify.");
       return;
     }
 
     if (!deviceId) {
-      setPlayerError(
-        "Player not ready yet. Please wait a moment and try again."
-      );
+      setPlayerError("Player not ready yet. Please wait and try again.");
       setTimeout(() => setPlayerError(null), 5000);
       return;
     }
@@ -162,12 +170,13 @@ export default function useSpotifyPlayer({
       setPlayerError(null);
     } catch (error) {
       console.error("Play highlight error:", error);
+
       let errorMessage = "Failed to play highlight. ";
 
       if (error.message.includes("Premium")) {
-        errorMessage += "Please ensure you have Spotify Premium.";
+        errorMessage += "Spotify Premium required.";
       } else if (error.message.includes("device")) {
-        errorMessage += "Player device not ready. Please try again.";
+        errorMessage += "Player device not ready.";
       } else {
         errorMessage += error.message;
       }
@@ -178,16 +187,16 @@ export default function useSpotifyPlayer({
   };
 
   const stopPlayback = async () => {
-    if (player) {
-      try {
-        await player.pause();
-        setIsPlaying(false);
-        setIsHighlightPlaying(false);
-        setHighlightStartTime(null);
-        setCurrentTrack(null);
-      } catch (error) {
-        console.error("Stop playback error:", error);
-      }
+    if (!playerRef.current) return;
+
+    try {
+      await playerRef.current.pause();
+      setIsPlaying(false);
+      setIsHighlightPlaying(false);
+      setHighlightStartTime(null);
+      setCurrentTrack(null);
+    } catch (error) {
+      console.error("Stop playback error:", error);
     }
   };
 

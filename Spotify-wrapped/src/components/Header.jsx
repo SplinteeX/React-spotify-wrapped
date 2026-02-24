@@ -4,7 +4,7 @@ function Header({ profile, isDemoMode, playerError, onLogout }) {
     <div className="header">
       <div className="header-left">
         <h1>
-          🎵 My Spotify Wrapped
+          🎵 Spotify Wrappy
           {isDemoMode && <span className="demo-tag">DEMO MODE</span>}
         </h1>
         <div className="user-info">

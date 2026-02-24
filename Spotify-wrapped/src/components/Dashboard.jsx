@@ -101,15 +101,36 @@ function Dashboard({
         </div>
 
         <div className="view-selector">
-          {["overview", "artists", "tracks", "insights"].map((view) => (
-            <button
-              key={view}
-              className={`view-button ${activeView === view ? "active" : ""}`}
-              onClick={() => setActiveView(view)}
-            >
-              {view.charAt(0).toUpperCase() + view.slice(1)}
-            </button>
-          ))}
+          <button
+            className={`view-button ${activeView === "overview" ? "active" : ""}`}
+            onClick={() => setActiveView("overview")}
+          >
+            <span>📊</span> Overview
+          </button>
+          <button
+            className={`view-button ${activeView === "artists" ? "active" : ""}`}
+            onClick={() => setActiveView("artists")}
+          >
+            <span>🎤</span> Artists
+          </button>
+          <button
+            className={`view-button ${activeView === "tracks" ? "active" : ""}`}
+            onClick={() => setActiveView("tracks")}
+          >
+            <span>🎵</span> Tracks
+          </button>
+          <button
+            className={`view-button ${activeView === "insights" ? "active" : ""}`}
+            onClick={() => setActiveView("insights")}
+          >
+            <span>📈</span> Insights
+          </button>
+          <button
+            className={`view-button ${activeView === "shop" ? "active" : ""}`}
+            onClick={() => setActiveView("shop")}
+          >
+            <span>🏪</span> Shop
+          </button>
 
           {wrappedData && (
             <button
@@ -230,6 +251,8 @@ function Dashboard({
               timeRange={timeRange}
             />
           )}
+
+          {/* Note: Shop view is handled in App.jsx */}
         </>
       ) : (
         <div className="empty-state">
@@ -252,6 +275,7 @@ function Dashboard({
                 <li>🎧 Recently played tracks</li>
                 <li>🔄 Playlist creation preview</li>
                 <li>📈 Mood and popularity insights</li>
+                <li>🏪 Badge shop with points system</li>
               </ul>
             </div>
           )}

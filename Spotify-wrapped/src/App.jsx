@@ -1,8 +1,10 @@
-// src/App.jsx
+// src/App.jsx (updated with shop view and points)
+import { useState } from "react";
 import "./App.css";
 import PlaylistModal from "./components/PlaylistModal";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
+import ShopView from "./components/views/ShopView"; // Import ShopView
 
 import useSpotifyAuth from "./hooks/useSpotifyAuth";
 import useSpotifyPlayer from "./hooks/useSpotifyPlayer";
@@ -19,7 +21,7 @@ export default function App() {
     enterDemoMode,
     exitDemoMode,
     refreshToken,
-  } = useSpotifyAuth(); // encapsulates parseHash + localStorage + /api/me etc. [file:1]
+  } = useSpotifyAuth();
 
   // 2) Player state + highlight playback
   const {
@@ -34,7 +36,7 @@ export default function App() {
   } = useSpotifyPlayer({
     accessToken,
     isDemoMode,
-  }); // encapsulates Web Playback SDK, deviceId, isPlaying, listeners, /api/play, /api/transfer-playback. [file:1]
+  });
 
   // 3) Wrapped data, audio features, recently played, playlist creation
   const {
@@ -65,7 +67,18 @@ export default function App() {
     refreshToken,
     playerError,
     setPlayerError,
-  }); // encapsulates /api/top, /api/audio-features, /api/recently-played, playlist create + demo, mood calc, etc. [file:1]
+  });
+
+  // 4) Shop state (points and purchased badges)
+  const [userPoints, setUserPoints] = useState(1250); // Example starting points
+  const [purchasedBadges, setPurchasedBadges] = useState(['new-listener', 'curator', 'wrapped-2023']); // Example owned badges
+
+  const handlePurchaseBadge = (badge) => {
+    if (userPoints >= badge.price) {
+      setUserPoints(prev => prev - badge.price);
+      setPurchasedBadges(prev => [...prev, badge.id]);
+    }
+  };
 
   const defaultPlaylistName = `My Spotify Wrapped - ${
     timeRange === "short_term"
@@ -79,7 +92,7 @@ export default function App() {
     wrappedData?.tracks.length || 50
   } tracks from my Spotify listening history. Generated with Spotify Wrapped on ${new Date().toLocaleDateString()}.`;
 
-  // Unauthenticated view (same logic as before, but using hook handlers)
+  // Unauthenticated view
   if (!accessToken && !isDemoMode) {
     return (
       <div className="page">
@@ -143,34 +156,46 @@ export default function App() {
         isDemoMode={isDemoMode}
         playerError={playerError}
         onLogout={isDemoMode ? exitDemoMode : handleLogout}
+        userPoints={userPoints} // Pass points to header
       />
 
-      <Dashboard
-        wrappedData={wrappedData}
-        timeRange={timeRange}
-        setTimeRange={setTimeRange}
-        isDemoMode={isDemoMode}
-        generateWrapped={generateWrapped}
-        loading={loading}
-        activeView={activeView}
-        setActiveView={setActiveView}
-        openPlaylistModal={openPlaylistModal}
-        creatingPlaylist={creatingPlaylist}
-        playlistUrl={playlistUrl}
-        playerError={playerError}
-        setPlayerError={setPlayerError}
-        playlistCreationError={playlistCreationError}
-        setPlaylistCreationError={setPlaylistCreationError}
-        recentlyPlayed={recentlyPlayed}
-        getMood={getMood}
-        audioFeatures={audioFeatures}
-        getAverageAudioFeature={getAverageAudioFeature}
-        getTrackFeatures={getTrackFeatures}
-        playHighlight={playHighlight}
-        isHighlightPlaying={isHighlightPlaying}
-        currentTrack={currentTrack}
-        accessToken={accessToken}
-      />
+      {activeView === 'shop' ? (
+        <div className="dashboard">
+          <ShopView
+            userPoints={userPoints}
+            purchasedBadges={purchasedBadges}
+            onPurchaseBadge={handlePurchaseBadge}
+            isDemoMode={isDemoMode}
+          />
+        </div>
+      ) : (
+        <Dashboard
+          wrappedData={wrappedData}
+          timeRange={timeRange}
+          setTimeRange={setTimeRange}
+          isDemoMode={isDemoMode}
+          generateWrapped={generateWrapped}
+          loading={loading}
+          activeView={activeView}
+          setActiveView={setActiveView}
+          openPlaylistModal={openPlaylistModal}
+          creatingPlaylist={creatingPlaylist}
+          playlistUrl={playlistUrl}
+          playerError={playerError}
+          setPlayerError={setPlayerError}
+          playlistCreationError={playlistCreationError}
+          setPlaylistCreationError={setPlaylistCreationError}
+          recentlyPlayed={recentlyPlayed}
+          getMood={getMood}
+          audioFeatures={audioFeatures}
+          getAverageAudioFeature={getAverageAudioFeature}
+          getTrackFeatures={getTrackFeatures}
+          playHighlight={playHighlight}
+          isHighlightPlaying={isHighlightPlaying}
+          currentTrack={currentTrack}
+          accessToken={accessToken}
+        />
+      )}
 
       {isHighlightPlaying && currentTrack && !isDemoMode && (
         <div className="player-status">
