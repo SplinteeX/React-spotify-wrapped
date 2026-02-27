@@ -47,7 +47,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--background);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    system-ui,
     sans-serif;
 }
 
@@ -860,6 +865,28 @@ body {
   font-size: 0.6875rem;
   letter-spacing: 0.5px;
 }
+.shop-loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.shop-loading-spinner {
+  font-size: 48px;
+  margin-bottom: 20px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 @keyframes pulse {
   0%,
@@ -1660,7 +1687,7 @@ body {
 }
 
 .shop-header::before {
-  content: '🏪';
+  content: "🏪";
   position: absolute;
   right: 2rem;
   top: 50%;
@@ -1700,7 +1727,7 @@ body {
 }
 
 .shop-points-card::after {
-  content: '💰';
+  content: "💰";
   position: absolute;
   right: 2rem;
   top: 50%;
@@ -1875,7 +1902,7 @@ body {
 }
 
 .shop-badge-card.owned::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -2141,7 +2168,42 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+.shop-return-container {
+  padding: 1rem 0 0.5rem 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 
+.shop-return-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(5px);
+}
+
+.shop-return-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(29, 185, 84, 0.5);
+  transform: translateX(-2px);
+}
+
+.shop-return-button .return-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.shop-return-button .return-text {
+  color: #fff;
+}
 /* Rarity-specific styles */
 .shop-badge-card.common .shop-badge-rarity {
   background: #4a4a4a;
@@ -2216,6 +2278,13 @@ body {
   .header-right {
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+  .shop-return-container {
+    padding: 0.75rem 0 0.25rem 0;
+  }
+  .shop-return-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
   }
 }
 

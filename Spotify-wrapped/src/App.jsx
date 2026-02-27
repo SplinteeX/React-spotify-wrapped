@@ -1,17 +1,16 @@
-// src/App.jsx (updated with shop view and points)
+// src/App.jsx
 import { useState } from "react";
 import "./App.css";
 import PlaylistModal from "./components/PlaylistModal";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
-import ShopView from "./components/views/ShopView"; // Import ShopView
+import ShopView from "./components/views/ShopView";
 
 import useSpotifyAuth from "./hooks/useSpotifyAuth";
 import useSpotifyPlayer from "./hooks/useSpotifyPlayer";
 import useWrappedData from "./hooks/useWrappedData";
 
 export default function App() {
-  // 1) Auth + profile + demo mode + tokens
   const {
     accessToken,
     profile,
@@ -70,13 +69,13 @@ export default function App() {
   });
 
   // 4) Shop state (points and purchased badges)
-  const [userPoints, setUserPoints] = useState(1250); // Example starting points
-  const [purchasedBadges, setPurchasedBadges] = useState(['new-listener', 'curator', 'wrapped-2023']); // Example owned badges
+  const [userPoints, setUserPoints] = useState(1250);
+  const [purchasedBadges, setPurchasedBadges] = useState([]); // Owned badges
 
   const handlePurchaseBadge = (badge) => {
     if (userPoints >= badge.price) {
-      setUserPoints(prev => prev - badge.price);
-      setPurchasedBadges(prev => [...prev, badge.id]);
+      setUserPoints((prev) => prev - badge.price);
+      setPurchasedBadges((prev) => [...prev, badge.id]);
     }
   };
 
@@ -84,8 +83,8 @@ export default function App() {
     timeRange === "short_term"
       ? "4 Weeks"
       : timeRange === "medium_term"
-      ? "6 Months"
-      : "All Time"
+        ? "6 Months"
+        : "All Time"
   }${isDemoMode ? " (Demo)" : ""}`;
 
   const defaultPlaylistDescription = `Top ${
@@ -156,16 +155,17 @@ export default function App() {
         isDemoMode={isDemoMode}
         playerError={playerError}
         onLogout={isDemoMode ? exitDemoMode : handleLogout}
-        userPoints={userPoints} // Pass points to header
+        userPoints={userPoints}
       />
 
-      {activeView === 'shop' ? (
+      {activeView === "shop" ? (
         <div className="dashboard">
           <ShopView
-            userPoints={userPoints}
+            userId={profile?.id}
             purchasedBadges={purchasedBadges}
             onPurchaseBadge={handlePurchaseBadge}
             isDemoMode={isDemoMode}
+            onReturnToMain={() => setActiveView("overview")}
           />
         </div>
       ) : (
@@ -206,7 +206,7 @@ export default function App() {
             <div className="player-status-detail">
               30-second highlight •{" "}
               {Math.round(
-                (playbackPosition - (highlightStartTime || 0)) / 1000
+                (playbackPosition - (highlightStartTime || 0)) / 1000,
               )}
               s / 30s
             </div>

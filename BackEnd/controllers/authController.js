@@ -1,6 +1,5 @@
 // controllers/authController.js
 import axios from "axios";
-import { getUsersCollection } from "../config/database.js";
 import {
   CLIENT_ID,
   CLIENT_SECRET,
@@ -15,6 +14,11 @@ import {
   createCodeChallenge,
   refreshAccessToken,
 } from "../config/spotify.js";
+import {
+  upsertUser,
+  getUserRefreshToken,
+  updateUserRefreshToken,
+} from "../db/userQueries.js";
 
 // ------------------- Login -------------------
 export function login(req, res) {
@@ -91,46 +95,32 @@ export async function callback(req, res) {
     const { access_token, refresh_token, expires_in } = tokenRes.data;
     console.log("✅ /auth/callback: Token exchange successful");
 
-    // ------------------- Fetch Spotify User -------------------
+    // ------------------- Fetch and Store Spotify User -------------------
+    let spotifyUserId = null;
+
     try {
       const userRes = await axios.get(`${SPOTIFY_API_URL}/me`, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
 
       const spotifyUser = userRes.data;
+      spotifyUserId = spotifyUser?.id;
 
-      if (spotifyUser?.id) {
+      if (spotifyUserId) {
         console.log(
-          `🔍 /auth/callback: Fetched Spotify user: ${spotifyUser.id}`,
+          `🔍 /auth/callback: Fetched Spotify user: ${spotifyUserId}`,
         );
 
-        const usersCollection = getUsersCollection();
-
-        // Store refresh token in memory (optional)
+        // Store refresh token in memory (optional - can be removed if not needed)
         if (refresh_token) {
-          refreshTokens.set(spotifyUser.id, refresh_token);
-          console.log(`💾 Stored refresh token for user: ${spotifyUser.id}`);
+          refreshTokens.set(spotifyUserId, refresh_token);
+          console.log(
+            `💾 Stored refresh token in memory for user: ${spotifyUserId}`,
+          );
         }
 
-        // Upsert user (single reliable write)
-        await usersCollection.updateOne(
-          { spotify_id: spotifyUser.id },
-          {
-            $set: {
-              spotify_id: spotifyUser.id,
-              display_name: spotifyUser.display_name || null,
-              email: spotifyUser.email || null,
-              updated_at: new Date(),
-            },
-            $setOnInsert: {
-              points: 0,
-              created_at: new Date(),
-            },
-          },
-          { upsert: true },
-        );
-
-        console.log(`✅ Upserted user in Atlas: ${spotifyUser.id}`);
+        // Upsert user in database with refresh token
+        await upsertUser(spotifyUser, refresh_token);
       } else {
         console.warn("⚠️ Spotify user id missing from /me response");
       }
@@ -146,6 +136,7 @@ export async function callback(req, res) {
       access_token,
       refresh_token: refresh_token || "",
       expires_in: String(expires_in || 3600),
+      user_id: spotifyUserId || "",
     });
 
     console.log("↪️ /auth/callback: Redirecting back to frontend");
@@ -171,7 +162,27 @@ export async function refresh(req, res) {
   }
 
   try {
-    const tokenToRefresh = refresh_token || refreshTokens.get(user_id);
+    // Try to get refresh token from request body, then memory, then database
+    let tokenToRefresh = refresh_token;
+
+    if (!tokenToRefresh && user_id) {
+      // Try memory first (faster)
+      tokenToRefresh = refreshTokens.get(user_id);
+
+      // If not in memory, try database
+      if (!tokenToRefresh) {
+        console.log(
+          `🔍 Looking up refresh token in database for user: ${user_id}`,
+        );
+        tokenToRefresh = await getUserRefreshToken(user_id);
+
+        // If found in database, cache in memory for future requests
+        if (tokenToRefresh) {
+          refreshTokens.set(user_id, tokenToRefresh);
+          console.log(`💾 Cached refresh token in memory for user: ${user_id}`);
+        }
+      }
+    }
 
     if (!tokenToRefresh) {
       return res.status(404).json({ error: "Refresh token not found" });
@@ -181,6 +192,16 @@ export async function refresh(req, res) {
 
     if (!newTokens) {
       return res.status(401).json({ error: "Failed to refresh token" });
+    }
+
+    // Update stored tokens if a new refresh token was returned
+    if (newTokens.refresh_token && user_id) {
+      // Update memory
+      refreshTokens.set(user_id, newTokens.refresh_token);
+
+      // Update database
+      await updateUserRefreshToken(user_id, newTokens.refresh_token);
+      console.log(`💾 Updated refresh token in database for user: ${user_id}`);
     }
 
     console.log(

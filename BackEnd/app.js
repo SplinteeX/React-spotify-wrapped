@@ -1,4 +1,5 @@
 import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
 import { requestLogger } from "./middleware/logger.js";
@@ -8,8 +9,10 @@ import userRoutes from "./routes/userRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
 import spotifyDataRoutes from "./routes/spotifyDataRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
+import pointsRoutes from "./routes/pointsRoutes.js";
 import { FRONTEND_URL, REDIRECT_URI } from "./config/spotify.js";
 import { connectDB } from "./config/database.js";
+import badgesRoutes from "./routes/badgesRoutes.js";
 
 const app = express();
 
@@ -31,6 +34,9 @@ app.use("/api", userRoutes);
 app.use("/api", statsRoutes);
 app.use("/api", spotifyDataRoutes);
 app.use("/", healthRoutes);
+app.use("/user", pointsRoutes);
+app.use("/user", badgesRoutes);
+app.use;
 
 // error handler
 app.use((err, req, res, next) => {

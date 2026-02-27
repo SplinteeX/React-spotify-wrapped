@@ -4,24 +4,38 @@ import demoData from "../demoData";
 
 const BACKEND_URL = "http://127.0.0.1:4000";
 
-function parseHash(hash) {
-  if (!hash) return {};
-  const params = new URLSearchParams(hash.replace(/^#/, ""));
+const parseHash = (hash) => {
+  const params = new URLSearchParams(hash.substring(1));
   return {
     access_token: params.get("access_token"),
     refresh_token: params.get("refresh_token"),
-    expires_in: params.get("expires_in"),
   };
-}
+};
 
 export default function useSpotifyAuth() {
   const [accessToken, setAccessToken] = useState(null);
   const [profile, setProfile] = useState(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
 
+  // Store userId in sessionStorage whenever profile changes
+  useEffect(() => {
+    if (profile?.id) {
+      console.log("💾 Storing userId in sessionStorage:", profile.id);
+      sessionStorage.setItem("spotify_user_id", profile.id);
+    } else {
+      console.log("🗑️ Clearing userId from sessionStorage");
+      sessionStorage.removeItem("spotify_user_id");
+    }
+  }, [profile?.id]);
+
   const refreshToken = useCallback(async () => {
     const refreshToken = window.localStorage.getItem("spotify_refresh_token");
-    const userId = profile?.id;
+    const userId = profile?.id || sessionStorage.getItem("spotify_user_id");
+
+    console.log("🔄 Refreshing token for user:", {
+      userId,
+      hasRefreshToken: !!refreshToken,
+    });
 
     if (!refreshToken && !userId) return null;
 
@@ -41,7 +55,7 @@ export default function useSpotifyAuth() {
         if (data.refresh_token) {
           window.localStorage.setItem(
             "spotify_refresh_token",
-            data.refresh_token
+            data.refresh_token,
           );
         }
         setAccessToken(data.access_token);
@@ -83,16 +97,20 @@ export default function useSpotifyAuth() {
       if (!accessToken && !isDemoMode) return;
 
       if (isDemoMode) {
+        console.log("🎮 Demo mode: Setting demo profile");
         setProfile(demoData.profile);
         return;
       }
 
       try {
+        console.log("📡 Fetching profile with token:", accessToken);
         const res = await fetch(`${BACKEND_URL}/api/me`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
+
         if (!res.ok) {
           if (res.status === 401) {
+            console.log("🔄 Token expired, refreshing...");
             const newToken = await refreshToken();
             if (newToken) {
               const retryRes = await fetch(`${BACKEND_URL}/api/me`, {
@@ -100,42 +118,52 @@ export default function useSpotifyAuth() {
               });
               if (retryRes.ok) {
                 const data = await retryRes.json();
+                console.log("✅ Profile fetched after refresh:", data);
                 setProfile(data);
               }
             }
           }
           return;
         }
+
         const data = await res.json();
+        console.log("✅ Profile fetched successfully:", data);
         setProfile(data);
       } catch (e) {
         console.error("Profile fetch error:", e);
       }
     };
+
     fetchProfile();
   }, [accessToken, refreshToken, isDemoMode]);
 
   const handleLogin = () => {
+    console.log("🔑 Redirecting to login");
     window.location.href = `${BACKEND_URL}/auth/login`;
   };
 
   const handleLogout = () => {
+    console.log("🚪 Logging out");
     window.localStorage.removeItem("spotify_access_token");
     window.localStorage.removeItem("spotify_refresh_token");
+    sessionStorage.removeItem("spotify_user_id");
     setAccessToken(null);
     setProfile(null);
     setIsDemoMode(false);
   };
 
   const enterDemoMode = () => {
+    console.log("🎮 Entering demo mode");
     setIsDemoMode(true);
     setProfile(demoData.profile);
     setAccessToken(null);
   };
 
   const exitDemoMode = () => {
+    console.log("🎮 Exiting demo mode");
     setIsDemoMode(false);
     setProfile(null);
+    sessionStorage.removeItem("spotify_user_id");
   };
 
   return {
