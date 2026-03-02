@@ -12,6 +12,7 @@ import healthRoutes from "./routes/healthRoutes.js";
 import pointsRoutes from "./routes/pointsRoutes.js";
 import { FRONTEND_URL, REDIRECT_URI } from "./config/spotify.js";
 import { connectDB } from "./config/database.js";
+import { seedBadges } from "./db/badgesQueries.js";
 import badgesRoutes from "./routes/badgesRoutes.js";
 
 const app = express();
@@ -58,6 +59,7 @@ app.use((req, res) => {
 export async function initApp() {
   try {
     await connectDB();
+    await seedBadges();
 
     console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
     console.log(`🔐 Redirect URI: ${REDIRECT_URI}`);

@@ -1,6 +1,8 @@
 // src/App.jsx
 import { useState } from "react";
 import "./App.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import PlaylistModal from "./components/PlaylistModal";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
@@ -95,6 +97,18 @@ export default function App() {
   if (!accessToken && !isDemoMode) {
     return (
       <div className="page">
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
         <div className="card">
           <h1>🎵 My Spotify Wrapped</h1>
           <p>
@@ -139,6 +153,19 @@ export default function App() {
 
   return (
     <div className="page">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+
       <PlaylistModal
         isOpen={showPlaylistModal}
         onClose={() => setShowPlaylistModal(false)}

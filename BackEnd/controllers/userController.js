@@ -1,6 +1,5 @@
 // controllers/userController.js
 import axios from "axios";
-import { getUsersCollection } from "../config/database.js";
 import { SPOTIFY_API_URL } from "../config/spotify.js";
 
 // ------------------- Get Me -------------------

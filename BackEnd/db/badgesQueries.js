@@ -1,12 +1,67 @@
-// db/badgeQueries.js
-import { getUsersCollection, getBadgesCollection } from "../config/database.js";
+// db/badgesQueries.js
+import { getDB } from "../config/database.js";
+import { Badges } from "../data/badgesData.js";
+
+function users() {
+  return getDB().collection("users");
+}
+
+function badges() {
+  return getDB().collection("badges");
+}
+
+/**
+ * Seed badges from badgesData if they don't exist
+ */
+export async function seedBadges() {
+  const col = badges();
+  const seedIds = Badges.map((b) => b.id);
+
+  const existing = await col
+    .find({ badge_id: { $in: seedIds } }, { projection: { badge_id: 1 } })
+    .toArray();
+
+  const existingSet = new Set(existing.map((d) => d.badge_id));
+
+  const now = new Date();
+  const toInsert = Badges.filter((b) => !existingSet.has(b.id)).map((b) => ({
+    badge_id: b.id,
+    name: b.name,
+    description: b.description ?? "",
+    category: b.category ?? "all",
+    price: Number(b.price ?? 0),
+    icon: b.icon ?? "",
+    rarity: b.rarity ?? "common",
+    gradient: b.gradient ?? "",
+    is_active: true,
+    created_at: now,
+    updated_at: now,
+  }));
+
+  if (toInsert.length === 0) {
+    console.log("✅ Badges already exist in database");
+    return;
+  }
+
+  const res = await col.insertMany(toInsert, { ordered: false });
+  console.log("✅ Created missing badges", {
+    inserted: res.insertedCount,
+    insertedIds: Object.values(res.insertedIds ?? {}),
+  });
+}
+
+/**
+ * Get all active badges
+ */
+export async function getAllBadges() {
+  return badges().find({ is_active: true }).toArray();
+}
 
 /**
  * Return purchased badge ids for a user
  */
 export async function getUserPurchasedBadgeIds(spotifyId) {
-  const users = getUsersCollection();
-  const user = await users.findOne(
+  const user = await users().findOne(
     { spotify_id: spotifyId },
     { projection: { purchased_badges: 1 } },
   );
@@ -24,11 +79,10 @@ export async function getUserPurchasedBadgeIds(spotifyId) {
  * - Deducts points + adds purchased badge + adds point transaction (all in ONE update)
  */
 export async function purchaseBadgeForUser(spotifyId, badgeId) {
-  const users = getUsersCollection();
-  const badges = getBadgesCollection();
+  const usersCol = users();
+  const badgesCol = badges();
 
-  // 1) Fetch badge (authoritative price)
-  const badge = await badges.findOne(
+  const badge = await badgesCol.findOne(
     { badge_id: badgeId, is_active: true },
     { projection: { badge_id: 1, price: 1, name: 1 } },
   );
@@ -39,7 +93,7 @@ export async function purchaseBadgeForUser(spotifyId, badgeId) {
 
   const price = Number(badge.price ?? 0);
 
-  const res = await users.findOneAndUpdate(
+  const res = await usersCol.findOneAndUpdate(
     {
       spotify_id: spotifyId,
       points: { $gte: price },
@@ -68,7 +122,7 @@ export async function purchaseBadgeForUser(spotifyId, badgeId) {
   );
 
   if (!res?.value) {
-    const user = await users.findOne(
+    const user = await usersCol.findOne(
       { spotify_id: spotifyId },
       { projection: { points: 1, purchased_badges: 1 } },
     );

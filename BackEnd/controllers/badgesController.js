@@ -1,12 +1,17 @@
-// controllers/badgesController.js
 import {
+  getAllBadges as getAllBadgesFromDb,
   getUserPurchasedBadgeIds,
   purchaseBadgeForUser,
 } from "../db/badgesQueries.js";
 
-export async function getAllBadges() {
-  const db = getDb();
-  return await db.collection("badges").find({ is_active: true }).toArray();
+export async function getAllBadges(req, res) {
+  try {
+    const badges = await getAllBadgesFromDb();
+    return res.json(badges);
+  } catch (error) {
+    console.error("Error in getAllBadges:", error.message);
+    return res.status(500).json({ error: "Failed to fetch badges" });
+  }
 }
 
 export async function getPurchasedBadges(req, res) {
