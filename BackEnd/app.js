@@ -13,7 +13,9 @@ import pointsRoutes from "./routes/pointsRoutes.js";
 import { FRONTEND_URL, REDIRECT_URI } from "./config/spotify.js";
 import { connectDB } from "./config/database.js";
 import { seedBadges } from "./db/badgesQueries.js";
+import { seedQuests } from "./db/questsQueries.js";
 import badgesRoutes from "./routes/badgesRoutes.js";
+import questsRoutes from "./routes/questsRoutes.js";
 
 const app = express();
 
@@ -37,6 +39,7 @@ app.use("/api", spotifyDataRoutes);
 app.use("/", healthRoutes);
 app.use("/user", pointsRoutes);
 app.use("/user", badgesRoutes);
+app.use("/user", questsRoutes);
 app.use;
 
 // error handler
@@ -60,6 +63,7 @@ export async function initApp() {
   try {
     await connectDB();
     await seedBadges();
+    await seedQuests();
 
     console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
     console.log(`🔐 Redirect URI: ${REDIRECT_URI}`);

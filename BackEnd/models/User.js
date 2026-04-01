@@ -29,6 +29,8 @@ const UserSchema = new mongoose.Schema({
 
   point_transactions: { type: [PointTransactionSchema], default: [] },
 
+  claimed_quests: { type: [String], default: [] },
+
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 });

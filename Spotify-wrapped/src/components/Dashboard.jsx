@@ -3,6 +3,7 @@ import OverviewView from "./views/OverviewView";
 import ArtistsView from "./views/ArtistsView";
 import TracksView from "./views/TracksView";
 import InsightsView from "./views/InsightsView";
+import QuestsView from "./views/QuestsView";
 
 function Dashboard({
   wrappedData,
@@ -124,6 +125,12 @@ function Dashboard({
             onClick={() => setActiveView("insights")}
           >
             <span>📈</span> Insights
+          </button>
+          <button
+            className={`view-button ${activeView === "quests" ? "active" : ""}`}
+            onClick={() => setActiveView("quests")}
+          >
+            <span>🎯</span> Quests
           </button>
           <button
             className={`view-button ${activeView === "shop" ? "active" : ""}`}
@@ -249,6 +256,14 @@ function Dashboard({
               getMood={getMood}
               recentlyPlayed={recentlyPlayed}
               timeRange={timeRange}
+            />
+          )}
+
+          {activeView === "quests" && (
+            <QuestsView
+              wrappedData={wrappedData}
+              recentlyPlayed={recentlyPlayed}
+              isDemoMode={isDemoMode}
             />
           )}
 
